@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Choice restriction -->
+    <string name="title_server_itemtype">Rank</string>
+    <string name="description_server_itemtype">Rank of the user</string>
+    <string name="entry_server_itemtype_computer">Computer</string>
+    <string name="entry_server_itemtype_phone">Phone</string>
+    <string-array name="entries_server_itemtype">
+        <item>@string/entry_server_itemtype_computer</item>
+        <item>@string/entry_server_itemtype_phone</item>
+    </string-array>
+    <string-array name="entry_values_server_itemtype">
+        <item>Computer</item>
+        <item>Phone</item>
+    </string-array>
+    <string name="default_server_itemtype">Computer</string>
+</resources>

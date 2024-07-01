@@ -40,11 +40,13 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.RestrictionsManager;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -52,6 +54,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.enterprise.feedback.KeyedAppState;
+import androidx.enterprise.feedback.KeyedAppStatesReporter;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -66,18 +70,27 @@ import android.widget.TextView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.flyve.inventory.InventoryTask;
 import org.glpi.inventory.agent.R;
+import org.glpi.inventory.agent.core.detailserver.DetailServer;
+import org.glpi.inventory.agent.core.detailserver.DetailServerPresenter;
 import org.glpi.inventory.agent.core.main.Main;
 import org.glpi.inventory.agent.core.main.MainPresenter;
 import org.glpi.inventory.agent.preference.GlobalParametersPreference;
 import org.glpi.inventory.agent.preference.InventoryParametersPreference;
+import org.glpi.inventory.agent.schema.ServerSchema;
 import org.glpi.inventory.agent.service.InventoryService;
+import org.glpi.inventory.agent.utils.AgentLog;
 import org.glpi.inventory.agent.utils.Helpers;
+import org.glpi.inventory.agent.utils.HttpInventory;
 import org.glpi.inventory.agent.utils.LocalPreferences;
 import org.glpi.inventory.agent.utils.LocalStorage;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class ActivityMain extends AppCompatActivity
@@ -115,11 +128,84 @@ public class ActivityMain extends AppCompatActivity
         }
     };
 
+    private BroadcastReceiver appRestrictionChange = null;
+    private KeyedAppStatesReporter appRestrictionChangeReporter = null;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter restrictionsFilter =
+                new IntentFilter(Intent.ACTION_APPLICATION_RESTRICTIONS_CHANGED);
+
+        BroadcastReceiver appRestrictionChange = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                resolveRestrictions();
+            }
+        };
+
+        registerReceiver(appRestrictionChange, restrictionsFilter);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (broadcastReceiver != null) {
+            unregisterReceiver(appRestrictionChange);
+            broadcastReceiver = null;
+        }
+    }
+
+    public static void enterpriseFeedback(Context context,
+                                          String key,
+                                          String message,
+                                          String data,
+                                          int severity) {
+        KeyedAppStatesReporter keyedAppStatesReporter = KeyedAppStatesReporter.create(context);
+        KeyedAppState keyedAppStateMessage = KeyedAppState.builder()
+                .setSeverity(severity)
+                .setKey(key)
+                .setMessage(message)
+                .setData(data)
+                .build();
+        List<KeyedAppState> list = new ArrayList<>();
+        list.add(keyedAppStateMessage);
+        keyedAppStatesReporter.setStates(list);
+    }
+
+    private void resolveRestrictions() {
+        RestrictionsManager myRestrictionsMgr = null;
+        myRestrictionsMgr = (RestrictionsManager) getSystemService(Context.RESTRICTIONS_SERVICE);
+        Bundle appRestrictions = myRestrictionsMgr.getApplicationRestrictions();
+        Parcelable[] parcelables = appRestrictions.getParcelableArray("server_configuration");
+
+        if (parcelables != null && parcelables.length > 0) {
+            final Context context = getApplicationContext();
+            for (int i = 0; i < parcelables.length; i++) {
+                Bundle serverConfig = (Bundle) parcelables[i];
+                JSONObject jo = new JSONObject();
+                LocalPreferences preferences = new LocalPreferences(context);
+                try {
+                    jo.put("address", serverConfig.getString("server_url"));
+                    jo.put("tag", serverConfig.getString("server_tag"));
+                    jo.put("login", serverConfig.getString("server_login"));
+                    jo.put("pass", serverConfig.getString("server_password"));
+                    jo.put("itemtype", serverConfig.getString("server_itemtype"));
+                    jo.put("serial", serverConfig.getString("server_custom_asset_serial"));
+                    preferences.saveJSONObject(serverConfig.getString("server_url"), jo);
+                    enterpriseFeedback(getApplicationContext(), "server_url", "server added / updated successfully", serverConfig.getString("server_url"), KeyedAppState.SEVERITY_INFO);
+                } catch (JSONException e) {
+                    enterpriseFeedback(getApplicationContext(), "server_url", "error while adding/updating server -> " + e.getMessage(), serverConfig.getString("server_url"), KeyedAppState.SEVERITY_ERROR);
+                    AgentLog.e(e.getMessage());
+                }
+            }
+        }
+    }
 
     @Override
     protected void onResume() {
         super.onResume();
         registerReceiver(broadcastReceiver,new IntentFilter(InventoryService.TIMER_RECEIVER));
+        resolveRestrictions();
     }
 
     @Override
@@ -234,6 +320,10 @@ public class ActivityMain extends AppCompatActivity
                 ActivityMain.this.startActivity(miIntent);
             }
         });
+
+        //app restriction change
+        KeyedAppStatesReporter appRestrictionChangeReporter = KeyedAppStatesReporter.create(getApplicationContext());
+
 
     }
 
