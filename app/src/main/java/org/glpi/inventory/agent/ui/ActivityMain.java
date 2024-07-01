@@ -149,9 +149,9 @@ public class ActivityMain extends AppCompatActivity
     @Override
     protected void onStop() {
         super.onStop();
-        if (broadcastReceiver != null) {
+        if (appRestrictionChange != null) {
             unregisterReceiver(appRestrictionChange);
-            broadcastReceiver = null;
+            appRestrictionChange = null;
         }
     }
 
