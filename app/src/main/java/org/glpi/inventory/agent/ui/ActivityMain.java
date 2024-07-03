@@ -173,6 +173,7 @@ public class ActivityMain extends AppCompatActivity
     }
 
     private void resolveRestrictions() {
+        AgentLog.e("EMM - START resolve restrictions");
         RestrictionsManager myRestrictionsMgr = null;
         myRestrictionsMgr = (RestrictionsManager) getSystemService(Context.RESTRICTIONS_SERVICE);
         Bundle appRestrictions = myRestrictionsMgr.getApplicationRestrictions();
@@ -191,14 +192,20 @@ public class ActivityMain extends AppCompatActivity
                     jo.put("pass", serverConfig.getString("server_password"));
                     jo.put("itemtype", serverConfig.getString("server_itemtype"));
                     jo.put("serial", serverConfig.getString("server_custom_asset_serial"));
+                    AgentLog.e("EMM - JSON " + jo.toString());
                     preferences.saveJSONObject(serverConfig.getString("server_url"), jo);
                     enterpriseFeedback(getApplicationContext(), "server_url", "server added / updated successfully", serverConfig.getString("server_url"), KeyedAppState.SEVERITY_INFO);
+                    AgentLog.e("EMM - server added / updated successfully");
                 } catch (JSONException e) {
                     enterpriseFeedback(getApplicationContext(), "server_url", "error while adding/updating server -> " + e.getMessage(), serverConfig.getString("server_url"), KeyedAppState.SEVERITY_ERROR);
-                    AgentLog.e(e.getMessage());
+                    AgentLog.e("EMM - error while adding/updating server");
+                    AgentLog.e("EMM - " + e.getMessage());
                 }
             }
+        } else {
+            AgentLog.e("EMM - 'server_configuration' key is empty");
         }
+        AgentLog.e("EMM - END resolve restrictions");
     }
 
     @Override
