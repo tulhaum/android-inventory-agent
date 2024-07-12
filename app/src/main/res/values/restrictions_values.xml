@@ -2,8 +2,8 @@
 <resources>
 
     <!-- Choice restriction -->
-    <string name="title_server_itemtype">Rank</string>
-    <string name="description_server_itemtype">Rank of the user</string>
+    <string name="title_server_itemtype">Type</string>
+    <string name="description_server_itemtype">Type of asset</string>
     <string name="entry_server_itemtype_computer">Computer</string>
     <string name="entry_server_itemtype_phone">Phone</string>
     <string-array name="entries_server_itemtype">
