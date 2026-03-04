@@ -58,14 +58,14 @@
         <item>JSON</item>
     </string-array>
     <string-array name="Time" translatable="false">
-        <item>Day</item>
-        <item>Week</item>
-        <item>Month</item>
+        <item>day</item>
+        <item>week</item>
+        <item>month</item>
     </string-array>
     <string-array name="TimeValue" translatable="false">
-        <item>Day</item>
-        <item>Week</item>
-        <item>Month</item>
+        <item>day</item>
+        <item>week</item>
+        <item>month</item>
     </string-array>
     <string-array name="AssetItemtype" translatable="false">
         <item>Computer</item>
