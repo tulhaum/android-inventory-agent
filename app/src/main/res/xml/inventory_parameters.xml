@@ -16,7 +16,7 @@
         android:widgetLayout="@layout/custom_checkbox"/>
 
     <ListPreference
-        android:defaultValue="@string/week"
+        android:defaultValue="@string/day"
         android:dependency="autoStartInventory"
         android:dialogTitle="@string/InventoryFrequency"
         android:entries="@array/Time"
