@@ -62,7 +62,7 @@
         <item>week</item>
         <item>month</item>
     </string-array>
-    <string-array name="TimeValue">
+    <string-array name="TimeValue" translatable="false">
         <item>Day</item>
         <item>Week</item>
         <item>Month</item>
